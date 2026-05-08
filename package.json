@@ -1,0 +1,14 @@
+{
+  "name": "genspark-api-client",
+  "version": "0.3.0",
+  "type": "module",
+  "description": "Genspark API Client Library (unofficial)",
+  "scripts": {
+    "test": "node test_genspark_api.js"
+  },
+  "author": "nishlumi",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  }
+}
