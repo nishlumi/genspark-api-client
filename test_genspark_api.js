@@ -278,6 +278,37 @@ async function runTests() {
     }
 
   }
+  const test10 = async () => {
+    console.log("▶ テスト10: crawler - JSON形式");
+    try {
+      const url = "https://note.com/lumidina/n/nbf52c4403d36";
+      const result = await client.crawler(url);
+      if (result.status === 'ok') {
+        console.log("✅ crawler 成功！");
+        console.log(result);
+      }
+    } catch (e) {
+      console.error("❌ 例外発生:", e.message);
+    }
+
+  }
+  const test11 = async () => {
+    console.log("▶ テスト11: social_twitter - JSON形式");
+    try {
+      const result = await client.executeTool("social_twitter",{
+        action: "search_posts",
+        query: "戦艦少女R",
+        language: "ja",
+      });
+      if (result.status === 'ok') {
+        console.log("✅ social_twitter 成功！");
+        console.log(result);
+      }
+    } catch (e) {
+      console.error("❌ 例外発生:", e.message);
+    }
+
+  }
 
 
   //await test1();
@@ -287,10 +318,12 @@ async function runTests() {
   //await test3();
   //await test4();
   //await test5();
-  await test6();
+  //await test6();
   //await test7();
   //await test8();
   //await test9();
+  //await test10();
+  await test11();
   
   console.log("\n========================================");
   console.log("すべてのテストが終了しました");

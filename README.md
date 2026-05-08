@@ -76,6 +76,11 @@ APIキーの漏洩に注意して保管してください。
 ```javascript
 const result = await client.executeTool('web_search', { q: '検索クエリ' });
 const stock = await client.executeTool('stock', { symbol: 'AAPL' });
+const result = await client.executeTool('social_twitter', {
+    action: "search_posts",  // 例：アクション名
+    query: "Genspark",       // その他のパラメータ
+});
+
 ```
 
 **引数:**

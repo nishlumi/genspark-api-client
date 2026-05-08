@@ -199,7 +199,7 @@ export class GensparkClient {
 
         return finalResult || { status: 'error', message: 'No final result found' };
     }
-    
+
     //##################################################################################
     // 検索・解析
     //##################################################################################
@@ -232,6 +232,21 @@ export class GensparkClient {
             images: searchResult.session_state?.flow_items || [],
             status: searchResult.status,
             message: searchResult.message
+        }
+    }
+    /**
+     * URLからウェブサイトの内容を取得する
+     * @param {String} url URL
+     * @param {Object} options オプション
+     * @returns {Promise<{raw: string, result: string, status: string, message: string}>} 
+     */
+    async crawler(url,options = {}) {
+        const result = await this._executeToolRaw('crawler', { url: url, ...options });
+        return {
+            raw: "",
+            result: result.data?.result || "",
+            status: result.status,
+            message: result.message
         }
     }
     /**
@@ -322,6 +337,27 @@ export class GensparkClient {
             urls.push(uploadResult.data.file_wrapper_url);
         }
         return await this.transcribeAudio(urls, options);
+    }
+    /**
+     * X(Twitter) 検索・情報取得
+     * @param {String} action アクション(search_posts,search_users,get_posts_by_author,get_posts_by_ids,get_user,get_user_connections,get_users_by_keywords,get_comments,get_quotes,get_retweets,get_post_interacting_users,count_posts)
+     * @param {String} query クエリ
+     * @param {Object} options オプション
+     * @returns {Promise<{raw: string, summary: string, info: Object, status: string, message: string}>} 
+     */
+    async socialTwitter(action, query, options = {}) {
+        const searchResult = await this._executeToolRaw('social_twitter', { 
+            action: action, 
+            query: query, 
+            ...options 
+        });
+        return {
+            raw: "",
+            results: searchResult.data?.results || [],
+            pagination: searchResult.data?.pagination || {},
+            status: searchResult.status,
+            message: searchResult.message
+        }
     }
 
     //##################################################################################
