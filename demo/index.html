@@ -184,7 +184,7 @@
                 resDiv.innerHTML = html;
             } else {
                 // Image Search or Generic Array Result
-                const images = data.images || data.data || (Array.isArray(data) ? data : null);
+                const images = data.sites || data.data || (Array.isArray(data) ? data : null);
                 if (images && Array.isArray(images) && images[0]?.image_url) {
                     let html = `<div class="flex flex-col gap-4">`;
                     images.forEach(img => {
