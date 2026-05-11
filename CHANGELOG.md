@@ -2,6 +2,18 @@
 
 本ドキュメントはGenspark API Client Libraryの変更履歴を記録します。
 
+## [0.4.0] - 2026-05-11
+
+### メディア解析機能の追加
+
+**新規機能:**
+
+- `analyzeMultimedia(urls, instruction)` — オンラインメディア（動画/音声）の解析
+- `analyzeLocalMultimedia(media, instruction)` — ローカルメディアの解析（自動アップロード対応）
+
+
+---
+
 ## [0.3.0] - 2026-05-08
 
 ### 便利メソッドの追加とAPI設計の改善

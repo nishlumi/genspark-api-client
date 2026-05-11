@@ -304,6 +304,42 @@ export class GensparkClient {
         return await this.analyzeImage([url], instruction, options);
     }
     /**
+     * オンラインの画像・動画・音声を解析する
+     * @param {Array<String>} urls URL
+     * @param {String} instruction 指示
+     * @param {Object} options オプション
+     * @returns {Promise<{raw: string, summary: string, info: Object, status: string, message: string}>} 
+     */
+    async analyzeMultimedia(urls, instruction, options = {}) {
+        const searchResult = await this._executeToolRaw('analyze_media', { 
+            media_urls: urls, 
+            requirements: instruction, 
+            analyze_type: options?.analyze_type || "",
+            ...options 
+        });
+        return {
+            raw: searchResult.data?.result || "",
+            results: searchResult.session_state?.results || [],
+            status: searchResult.status,
+            message: searchResult.message
+        }
+    }
+    /**
+     * ローカルの画像を解析する（内部的にはファイルをアップロードしてから解析する）
+     * @param {Blob} media 画像データ
+     * @param {String} instruction 指示
+     * @param {Object} options オプション
+     * @returns {Promise<{raw: string, summary: string, info: Object, status: string, message: string}>} 
+     */
+    async analyzeLocalMultimedia(media, instruction, options = {}) {
+        const uploadResult = await this.uploadFile(media);
+        if (uploadResult.status !== 'ok') {
+            throw new Error('Failed to upload image: ' + uploadResult.message);
+        }
+        const url = uploadResult.data.file_wrapper_url;
+        return await this.analyzeMultimedia([url], instruction, options);
+    }
+    /**
      * 音声を解析して文字起こしする
      * @param {Array<String>} urls 音声のURL
      * @param {Object} options オプション(model, etc...)

@@ -8,7 +8,7 @@ It is designed as a zero-dependency, single-file ES module.
 - **Single-File Setup** — Ready to use just by copying `genspark_api.js`.
 - **Zero Dependencies** — Uses only the standard `fetch` available in Node.js 18+.
 - **ESM Format** — Use via `import { GensparkClient } from './genspark_api.js'`.
-- **Convenience Methods** — Easily call Web Search, Image Analysis, AI Drive operations, etc.
+- **Convenience Methods** — Easily call Web Search, Image/Multimedia Analysis, AI Drive operations, etc.
 - **Media Base64 Streaming** — Returns images, videos, and audio as Base64 chunks to save memory.
 - **Output Format Switching** — Choose between JSON or text (equivalent to CLI `--output text`) in `executeTool`.
 
@@ -181,6 +181,43 @@ const { summary } = await client.analyzeLocalImage(blob, 'Explain this image');
 - `instruction` (`string`) — Instructions for the analysis.
 
 **Returns:** `{ raw, results, summary, info, status, message }`
+
+---
+
+### `analyzeMultimedia(urls, instruction, options)`
+
+Analyzes online images, videos, or audio files.
+
+```javascript
+const { results } = await client.analyzeMultimedia(
+  ['https://example.com/video.mp4'],
+  'Summarize the content of this video'
+);
+```
+
+**Arguments:**
+- `urls` (`string[]`) — Array of media URLs.
+- `instruction` (`string`) — Instructions for the analysis.
+- `options.analyze_type` (`string`) — Type of analysis (optional).
+
+**Returns:** `{ raw, results, status, message }`
+
+---
+
+### `analyzeLocalMultimedia(media, instruction, options)`
+
+Analyzes a local media file (internally handles upload → analysis).
+
+```javascript
+const blob = new Blob([fs.readFileSync('video.mp4')], { type: 'video/mp4' });
+const { results } = await client.analyzeLocalMultimedia(blob, 'Describe the scene');
+```
+
+**Arguments:**
+- `media` (`File|Blob`) — The media data.
+- `instruction` (`string`) — Instructions for the analysis.
+
+**Returns:** `{ raw, results, status, message }`
 
 ---
 

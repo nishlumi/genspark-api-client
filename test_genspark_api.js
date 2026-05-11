@@ -257,6 +257,42 @@ async function runTests() {
     }
 
   }
+  const test8b = async () => {
+    console.log("▶ テスト8b: analyzeLocalMultimedia");
+    try {
+      const image = fs.readFileSync("sample/myvoice2.mp3");
+      const bb = new Blob([image], {type: "audio/mp3"});
+      console.log("メディア読み込み完了、解析スタート");
+      const driveResult = await client.analyzeLocalMultimedia(bb, "この音声の説明");
+        console.log(driveResult);
+      if (driveResult.status === 'ok') {
+        console.log("✅ analyzeLocalMultimedia 成功！");
+        
+      }
+    } catch (e) {
+      console.error("❌ 例外発生:", e.message);
+    }
+
+  }
+  const test8c = async () => {
+    console.log("▶ テスト8b: analyzeMultimedia");
+    try {
+      const urls = [
+        "https://image.cdn2.seaart.me/2026-01-23/d5pbju5e878c738ck0hg/e83dae4c-fe33-4f12-bf95-b09a1361ad12.mp4"
+      ];
+      console.log("メディア読み込み完了、解析スタート");
+      const driveResult = await client.analyzeMultimedia(urls, "このメディアの説明");
+        console.log(JSON.stringify(driveResult,null,2));
+      if (driveResult.status === 'ok') {
+        console.log("✅ analyzeMultimedia 成功！");
+        
+      }
+    } catch (e) {
+      console.error("❌ 例外発生:", e.message);
+    }
+
+  }
+  
   const test9 = async () => {
     console.log("▶ テスト9: 音声を文字起こしする（transcribe)");
     try {
@@ -295,13 +331,28 @@ async function runTests() {
   const test11 = async () => {
     console.log("▶ テスト11: social_twitter - JSON形式");
     try {
-      const result = await client.executeTool("social_twitter",{
+      const result = await client.socialTwitter("social_twitter",{
         action: "search_posts",
         query: "戦艦少女R",
         language: "ja",
       });
       if (result.status === 'ok') {
         console.log("✅ social_twitter 成功！");
+        console.log(result);
+      }
+    } catch (e) {
+      console.error("❌ 例外発生:", e.message);
+    }
+
+  }
+  const test12 = async () => {
+    console.log("▶ テスト12: stock_price - JSON形式");
+    try {
+      const result = await client.executeTool("stock_price",{
+        symbol: "META"
+      });
+      if (result.status === 'ok') {
+        console.log("✅ stock_price 成功！");
         console.log(result);
       }
     } catch (e) {
@@ -321,9 +372,12 @@ async function runTests() {
   //await test6();
   //await test7();
   //await test8();
+  //await test8b();
+  await test8c();
   //await test9();
   //await test10();
-  await test11();
+  //await test11();
+  //await test12();
   
   console.log("\n========================================");
   console.log("すべてのテストが終了しました");

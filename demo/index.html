@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Genspark API Playground</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        .result-container { background-color: #f8fafc; border: 1px solid #e2e8f0; padding: 1rem; border-radius: 0.5rem; min-height: 200px; white-space: pre-wrap; }
+        .tab-active { border-bottom: 2px solid #3b82f6; color: #3b82f6; }
+        .prose h1 { font-size: 1.5rem; font-weight: bold; margin-top: 1rem; margin-bottom: 0.5rem; }
+        .prose h2 { font-size: 1.25rem; font-weight: bold; margin-top: 0.75rem; margin-bottom: 0.5rem; border-bottom: 1px solid #e2e8f0; }
+        .prose p { margin-bottom: 0.75rem; line-height: 1.6; }
+        .prose ul { list-style-type: disc; margin-left: 1.5rem; margin-bottom: 0.75rem; }
+        .prose ol { list-style-type: decimal; margin-left: 1.5rem; margin-bottom: 0.75rem; }
+        .prose a { color: #2563eb; text-decoration: underline; }
+        .prose code { background-color: #edf2f7; padding: 0.2rem 0.4rem; border-radius: 0.25rem; font-family: monospace; }
+        .prose pre { background-color: #1e293b; color: #f8fafc; padding: 1rem; border-radius: 0.5rem; overflow-x: auto; margin-bottom: 0.75rem; }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen p-4 md:p-8">
+    <div class="max-w-4xl mx-auto bg-white rounded-xl shadow-md overflow-hidden p-6">
+        <h1 class="text-2xl font-bold mb-6 text-gray-800">Genspark API Playground</h1>
+        
+        <!-- Instructions Section -->
+        <div class="mb-8 p-4 bg-amber-50 rounded-lg border border-amber-100">
+            <h2 class="text-sm font-bold text-amber-800 mb-2 flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                ご利用上の注意
+            </h2>
+            <ul class="text-xs text-amber-700 space-y-1 list-disc ml-4">
+                <li>本アプリは <strong>server.js</strong> を介して動作します。</li>
+                <li>OSの環境変数 または <code>.env</code> ファイルに <strong>GSK_API_KEY</strong> を定義してからサーバーを起動してください。</li>
+                <li>APIキーをフロントエンドで管理せず、サーバー側で安全に保持する構成です。</li>
+                <li>CORS制限を回避するため、必ず <code>node server.js</code> でホストした環境でアクセスしてください。</li>
+            </ul>
+        </div>
+
+        <!-- Tab Navigation -->
+        <div class="flex border-b mb-6 overflow-x-auto">
+            <button onclick="switchTab('web')" id="tab-web" class="px-4 py-2 font-medium tab-active">Web Search</button>
+            <button onclick="switchTab('image')" id="tab-image" class="px-4 py-2 font-medium text-gray-500">Image Search</button>
+            <button onclick="switchTab('crawler')" id="tab-crawler" class="px-4 py-2 font-medium text-gray-500">Crawler</button>
+            <button onclick="switchTab('summary')" id="tab-summary" class="px-4 py-2 font-medium text-gray-500">Web Summary</button>
+            <button onclick="switchTab('gen')" id="tab-gen" class="px-4 py-2 font-medium text-gray-500">Image Gen</button>
+        </div>
+
+        <!-- Tool Panels -->
+        <div id="panel-web" class="panel">
+            <div class="flex gap-2 mb-4">
+                <input type="text" id="web-query" placeholder="What do you want to search?" class="flex-1 p-2 border rounded">
+                <button onclick="runWebSearch()" class="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 transition">Search</button>
+            </div>
+        </div>
+
+        <div id="panel-image" class="panel hidden">
+            <div class="flex gap-2 mb-4">
+                <input type="text" id="image-query" placeholder="Search for images..." class="flex-1 p-2 border rounded">
+                <button onclick="runImageSearch()" class="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 transition">Search</button>
+            </div>
+        </div>
+
+        <div id="panel-crawler" class="panel hidden">
+            <div class="flex gap-2 mb-4">
+                <input type="text" id="crawler-url" placeholder="https://example.com" class="flex-1 p-2 border rounded">
+                <button onclick="runCrawler()" class="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 transition">Crawl</button>
+            </div>
+        </div>
+
+        <div id="panel-summary" class="panel hidden">
+            <div class="grid grid-cols-1 gap-2 mb-4">
+                <input type="text" id="summary-url" placeholder="URL to summarize" class="p-2 border rounded">
+                <input type="text" id="summary-query" placeholder="What specifically do you want to know?" class="p-2 border rounded">
+                <button onclick="runSummary()" class="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 transition">Summarize</button>
+            </div>
+        </div>
+
+        <div id="panel-gen" class="panel hidden">
+            <div class="grid grid-cols-1 gap-3 mb-4">
+                <textarea id="gen-query" rows="3" cols="50" placeholder="A futuristic cityscape with flying cars..." class="p-2 border rounded"></textarea>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+                    <div>
+                        <label class="text-xs text-gray-500 block">Model</label>
+                        <select id="gen-model" class="w-full p-2 border rounded text-sm">
+                            <option value="gpt-image-2">gpt-image-2</option>
+                            <option value="nano-banana-pro">nano-banana-pro</option>
+                            <option value="nano-banana-2" selected>nano-banana-2</option>
+                            <option value="fal-ai/bytedance/seedream/v5/lite">fal-ai/bytedance/seedream/v5/lite</option>
+                            <option value="fal-ai/flux-2-pro">fal-ai/flux-2-pro</option>
+                            <option value="fal-ai/z-image/turbo">fal-ai/z-image/turbo</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-500 block">Aspect Ratio</label>
+                        <select id="gen-aspect" class="w-full p-2 border rounded text-sm">
+                            <option value="1:1" selected>1:1</option>
+                            <option value="4:3">4:3</option>
+                            <option value="16:9">16:9</option>
+                            <option value="9:16">9:16</option>
+                            <option value="3:4">3:4</option>
+                            <option value="2:3">2:3</option>
+                            <option value="3:2">3:2</option>
+                            <option value="auto">auto</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-500 block">Size</label>
+                        <select id="gen-size" class="w-full p-2 border rounded text-sm">
+                            <option value="auto" selected>auto</option>
+                            <option value="0.5k">0.5k</option>
+                            <option value="1k">1k</option>
+                            <option value="2k">2k</option>
+                            <option value="3k">3k</option>
+                            <option value="4k">4k</option>
+                        </select>
+                    </div>
+                </div>
+                <button onclick="runImageGen()" class="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 transition">Generate Image</button>
+            </div>
+        </div>
+
+        <!-- Result Area -->
+        <div class="mt-6">
+            <div class="flex justify-between items-center mb-2">
+                <h3 class="text-lg font-semibold text-gray-700">Result</h3>
+                <button onclick="clearResult()" class="text-sm text-gray-500 hover:text-red-500">Clear</button>
+            </div>
+            <div id="result" class="result-container text-sm overflow-auto max-h-[600px]">Waiting for input...</div>
+        </div>
+    </div>
+
+    <script>
+        // Removed API Key Management UI logic
+
+        async function apiRequest(endpoint, body) {
+            const response = await fetch(`/api/${endpoint}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ...body })
+            });
+            return response.json();
+        }
+        // ... (remaining functions remain the same)
+
+        function displayResult(data, isMarkdown = false) {
+            const resDiv = document.getElementById('result');
+            if (!data) {
+                resDiv.innerHTML = `<div class="text-red-600 font-bold">Error: No data received</div>`;
+                return;
+            }
+            if (data.status === 'error') {
+                resDiv.innerHTML = `<div class="text-red-600 font-bold">Error: ${data.message}</div>`;
+            } else if (typeof data === 'string') {
+                if (data.startsWith('<div class="flex flex-col items-center gap-4">')) {
+                    // Special case for image generation HTML
+                    resDiv.innerHTML = data;
+                } else if (isMarkdown) {
+                    resDiv.innerHTML = `<div class="prose">${marked.parse(data)}</div>`;
+                } else {
+                    resDiv.textContent = data;
+                }
+            } else if (data.results && Array.isArray(data.results) && data.results[0]?.title) {
+
+                // Web Search Result Formatting
+                let html = `<div class="flex flex-col gap-4">`;
+                data.results.forEach(res => {
+                    html += `
+                        <div class="p-4 bg-white border rounded-lg shadow-sm hover:shadow-md transition">
+                            <div class="font-bold text-blue-600 text-lg mb-1">
+                                <a href="${res.link}" target="_blank" class="hover:underline">${res.title}</a>
+                            </div>
+                            <p class="text-gray-600 text-sm mb-2">${res.snippet || 'No description available.'}</p>
+                            <div class="text-xs text-gray-400 flex justify-between items-center">
+                                <span class="truncate max-w-[70%]">${res.link}</span>
+                                <span>Pos: ${res.position}</span>
+                            </div>
+                        </div>
+                    `;
+                });
+                html += `</div>`;
+                resDiv.innerHTML = html;
+            } else {
+                // Image Search or Generic Array Result
+                const images = data.images || data.data || (Array.isArray(data) ? data : null);
+                if (images && Array.isArray(images) && images[0]?.image_url) {
+                    let html = `<div class="flex flex-col gap-4">`;
+                    images.forEach(img => {
+                        const url = img.image_url || img.url;
+                        html += `
+                            <div class="flex bg-white border rounded-lg shadow-sm overflow-hidden hover:shadow-md transition h-32">
+                                <div class="w-32 h-full flex-shrink-0 bg-gray-200">
+                                    <img src="${url}" class="w-full h-full object-cover" onerror="this.src='https://via.placeholder.com/128?text=No+Image'">
+                                </div>
+                                <div class="p-3 flex flex-col justify-between overflow-hidden">
+                                    <div class="font-bold text-blue-600 text-sm truncate">
+                                        <a href="${img.link || '#'}" target="_blank" class="hover:underline">${img.title || 'No Title'}</a>
+                                    </div>
+                                    <div class="text-xs text-gray-500 truncate">Source: ${img.source || 'Unknown'}</div>
+                                    <div class="text-xs text-gray-400 truncate italic">${img.link || ''}</div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    html += `</div>`;
+                    resDiv.innerHTML = html;
+                } else {
+                    resDiv.textContent = JSON.stringify(data, null, 2);
+                }
+            }
+        }
+
+        window.clearResult = () => {
+            document.getElementById('result').textContent = 'Waiting for input...';
+        };
+
+        window.switchTab = (tab) => {
+            document.querySelectorAll('.panel').forEach(p => p.classList.add('hidden'));
+            document.getElementById(`panel-${tab}`).classList.remove('hidden');
+            
+            document.querySelectorAll('[id^="tab-"]').forEach(t => {
+                t.classList.remove('tab-active');
+                t.classList.add('text-gray-500');
+            });
+            document.getElementById(`tab-${tab}`).classList.add('tab-active');
+            document.getElementById(`tab-${tab}`).classList.remove('text-gray-500');
+        };
+
+        window.runWebSearch = async () => {
+            const query = document.getElementById('web-query').value;
+            if (!query) return;
+            try {
+                displayResult('Searching...');
+                const res = await apiRequest('web-search', { query });
+                displayResult(res);
+            } catch (e) {
+                displayResult({ status: 'error', message: e.message });
+            }
+        };
+
+        window.runImageSearch = async () => {
+            const query = document.getElementById('image-query').value;
+            if (!query) return;
+            try {
+                displayResult('Searching images...');
+                const res = await apiRequest('image-search', { query });
+                displayResult(res);
+            } catch (e) {
+                displayResult({ status: 'error', message: e.message });
+            }
+        };
+
+        window.runCrawler = async () => {
+            const url = document.getElementById('crawler-url').value;
+            if (!url) return;
+            try {
+                displayResult('Crawling...');
+                const res = await apiRequest('crawler', { url });
+                displayResult(res.result || res, true);
+            } catch (e) {
+                displayResult({ status: 'error', message: e.message });
+            }
+        };
+
+        window.runSummary = async () => {
+            const url = document.getElementById('summary-url').value;
+            const query = document.getElementById('summary-query').value;
+            if (!url || !query) return alert('Please enter both URL and Question');
+            try {
+                displayResult('Summarizing...');
+                const res = await apiRequest('summary', { url, query });
+                displayResult(res.summary || res, true);
+            } catch (e) {
+                displayResult({ status: 'error', message: e.message });
+            }
+        };
+
+        window.runImageGen = async () => {
+            const query = document.getElementById('gen-query').value;
+            if (!query) return;
+            
+            const model = document.getElementById('gen-model').value;
+            const aspect_ratio = document.getElementById('gen-aspect').value;
+            const image_size = document.getElementById('gen-size').value;
+
+            try {
+                displayResult('Generating image... (this may take a while)');
+                const res = await apiRequest('image-gen', { 
+                    query, 
+                    model, 
+                    aspect_ratio, 
+                    image_size 
+                });
+
+                if (res.status === 'ok' && res.base64) {
+                    displayResult(`<div class="flex flex-col items-center gap-4">
+                        <img src="data:image/png;base64,${res.base64}" class="max-w-full rounded-lg shadow-lg border bg-gray-100">
+                        <div class="text-xs text-gray-500">Model: ${model} | Aspect Ratio: ${aspect_ratio} | Size: ${image_size}</div>
+                    </div>`, false);
+                    // We use false for isMarkdown because we are passing HTML directly to displayResult
+                    // But displayResult expects a string and renders as text if not isMarkdown.
+                    // I will use a special way to render HTML.
+                } else {
+                    displayResult(res);
+                }
+            } catch (e) {
+                displayResult({ status: 'error', message: e.message });
+            }
+        };
+    </script>
+</body>
+</html>
