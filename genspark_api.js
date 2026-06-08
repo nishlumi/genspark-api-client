@@ -80,54 +80,30 @@ export class GensparkClient {
 
     /**
      * ツールの実行（内部用 - 常にJSONオブジェクトを返す）
-     * NDJSONストリームをパースして最終結果を取得する。
+     * レスポンスを一括取得し、NDJSON（または通常のJSON）をパースして最終結果を取得する。
      * @param {string} toolName - ツール名
      * @param {Object} args - ツールへ渡す引数
      * @returns {Promise<Object>} APIレスポンス（常にJSONオブジェクト）
      */
     async _executeToolRaw(toolName, args) {
         const response = await this._request(`/${toolName}`, 'POST', args);
-
-        // ツールAPIはNDJSON（改行区切りのJSON）で返ることがあるため、
-        // ストリームを読み取って最終結果（statusを含む行）を取得する
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder();
-        let buffer = '';
+        const text = await response.text();
+        const lines = text.trim().split('\n');
         let finalResult = null;
 
-        try {
-            while (true) {
-                const { done, value } = await reader.read();
-                if (done) break;
+        for (const rawLine of lines) {
+            const line = rawLine.trim();
+            if (!line || !line.startsWith('{')) continue;
 
-                buffer += decoder.decode(value, { stream: true });
-                let newlineIdx;
-
-                while ((newlineIdx = buffer.indexOf('\n')) !== -1) {
-                    const line = buffer.substring(0, newlineIdx).trim();
-                    buffer = buffer.substring(newlineIdx + 1);
-
-                    if (!line || !line.startsWith('{')) continue;
-
-                    try {
-                        const parsed = JSON.parse(line);
-                        if (parsed.status) {
-                            finalResult = parsed;
-                        }
-                    } catch (e) { }
+            try {
+                const parsed = JSON.parse(line);
+                // statusが存在するか、versionが未定義（普通のJSON）の場合に最終結果とする
+                if (parsed.status || parsed.version === undefined) {
+                    finalResult = parsed;
                 }
+            } catch (e) {
+                // 不正なJSON行はスキップ
             }
-
-            // 残りのバッファ
-            const remaining = buffer.trim();
-            if (remaining && remaining.startsWith('{')) {
-                try {
-                    const parsed = JSON.parse(remaining);
-                    if (parsed.status) finalResult = parsed;
-                } catch (e) { }
-            }
-        } finally {
-            reader.releaseLock();
         }
 
         return finalResult || { status: 'error', message: 'No final result found' };
